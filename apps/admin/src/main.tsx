@@ -6,6 +6,7 @@ import { ResizableTableHead, Table, TableBody, TableCell, TableHead, TableHeader
 import { loadCustomer, loadCustomers, saveCustomer } from "./customer-api";
 import { CustomerForm, EditCustomer } from "./customer-form";
 import { countryName } from "../../../packages/shared/countries";
+import { catalogRoutes, Configuration } from "./catalog";
 import "./styles.css";
 
 const navigation = [
@@ -13,7 +14,7 @@ const navigation = [
   { to: "/customers", title: "Customers", icon: Users },
   { to: "/voyages", title: "Voyages", icon: Ship, empty: "No voyages to display" },
   { to: "/billing", title: "Billing", icon: ReceiptText, empty: "No billing activity" },
-  { to: "/configuration", title: "Configuration", icon: Settings, empty: "No settings available" },
+  { to: "/configuration", title: "Configuration", icon: Settings },
 ];
 
 function Shell() {
@@ -173,6 +174,8 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/customers/new" action={saveCustomer} element={<CustomerForm />} />
           <Route path="/customers/:customerId" loader={loadCustomer} element={<CustomerDetail />} errorElement={<CustomerLoadError detail />} hydrateFallbackElement={<p role="status">Loading customer…</p>} />
           <Route path="/customers/:customerId/edit" loader={loadCustomer} action={saveCustomer} element={<EditCustomer />} errorElement={<CustomerLoadError detail />} hydrateFallbackElement={<p role="status">Loading customer…</p>} />
+          <Route path="/configuration" element={<Configuration />} />
+          {catalogRoutes()}
           {navigation.map(({ to, title, empty }) => empty && (
             <Route key={to} path={to} element={<><h1>{title}</h1><p className="table-panel empty-state">{empty}</p></>} />
           ))}
