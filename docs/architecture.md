@@ -3,19 +3,23 @@
 ## Components and ownership
 
 - **Admin** uses React and TypeScript and accesses session and billing status through the Port Hopper backend.
-- **Backend** uses strict TypeScript with Hono as the preferred HTTP framework. It owns player-to-customer associations, Play Sessions, measured usage, and submission status. Ports, vessels, and voyages also belong to the backend and are outside the first slice.
+- **Backend** uses strict TypeScript with Hono as the preferred HTTP framework. It owns player-to-customer associations, voyages (Play Sessions), authoritative measured usage, and usage submission. Ports and vessels also belong to the backend.
 - **Billing adapter** is server-side. The mock adapter runs locally without credentials. A future, separate Instellix adapter will use authorized public endpoints after explicit approval. Instellix owns products and contracts, rating, invoices, and payment records. Client applications access billing information through the backend.
-- **Location concepts** remain separate. Customer billing country describes the customer account, performance location describes where activity occurred, and tax location is a distinct billing concept. The first slice does not derive one from another.
+- **Rating inputs** come from the voyage context. The selected vessel or vessel category maps to the Instellix product, and the harbor determines the service performance location. Store or resolve these independently of the customer's billing country and of tax location.
 
 ## Persistence and lifecycle
 
+Each customer record represents an individual player's game account. Preserve the local customer ID and keep any external Instellix customer reference optional and separate. Store residence and billing country independently. Performance country comes from the voyage's harbor, and tax location is a separate billing concept.
+
 Use SQLite for the local backend. Persist the synthetic customer account and player association, session owner and timestamps, the recorded total, accepted activity signal IDs, and each finalized usage record and submission status. Enforce one active session per player and one usage record per finalized session with database constraints. Resolve an expired prior session before allowing a new one.
 
-Use the backend clock. A session starts with zero usage and a 30-second window for the first activity signal. The first accepted signal sets the timing baseline and adds zero. Each subsequent accepted signal adds the elapsed time since the previous accepted signal, capped at 10 seconds. A gap of 30 seconds or more expires the session without crediting the gap. Keep time at subsecond precision internally and truncate the cumulative total to whole seconds for display and billing. The signal interval and inactivity timeout are configurable, with the credit cap matching the configured interval.
+Use the backend clock. The browser timer is for display only. A session starts with zero usage and a 30-second window for the first activity signal. The first accepted signal sets the timing baseline and adds zero. Each subsequent accepted signal adds the elapsed time since the previous accepted signal, capped at 10 seconds. A gap of 30 seconds or more expires the session without crediting the gap. Keep measured time at subsecond precision and expose whole seconds for display. At finalization, convert the measured duration to the configured billing unit (initially minutes) and apply the configured rounding rule. The signal interval and inactivity timeout are configurable, with the credit cap matching the configured interval.
 
 Check for expiry on startup and periodically during operation. The API also checks expiry when processing a session request. An expired session ends at its last accepted signal, or at its start if it received none. Ending explicitly also grants no trailing time. Only active gameplay should generate activity signals. This local slice relies on synthetic activity signals and a server-side clock. Production validation of player activity remains open.
 
 Finalize the session and create its positive-usage record in one transaction. Persist pending submissions before calling the adapter. Reconcile pending submissions on startup and serialize attempts for each record. Use the stable usage record ID as the adapter idempotency key, including after a crash or an operator retry. The mock must handle a repeated key without a second logical submission. Live adapter idempotency and recovery semantics require verification before live use.
+
+Mission outcome has no role in finalization or quantity. Keep duration measurement separate from usage submission so reporting can later submit periodic increments from the measured total. For the MVP, activity signals only meter time and submission happens once per finalized session.
 
 ## API contract boundaries
 
@@ -29,4 +33,4 @@ Validate inputs at the API boundary. The seeded player is resolved by local back
 | Admin | List sessions | Return player, customer account, session status, recorded seconds, and billing status. |
 | Admin | Retry submission | Retry a failed record using its existing ID and immutable quantity. |
 
-Run the first slice on localhost with synthetic data. Keep credentials server-side and out of logs. A future one-time purchase would use a separate billing event associated with the player and customer account, independent of play-time metering.
+Run the first slice on localhost with synthetic data. Keep credentials server-side and out of logs. A future in-game purchase would be a separate one-time charge or transaction associated with the player and customer account, independent of play-time metering.

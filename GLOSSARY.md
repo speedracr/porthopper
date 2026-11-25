@@ -4,6 +4,9 @@ Port Hopper operates a fictional maritime game and measures gameplay usage for b
 
 ## Language
 
+**Customer**:
+An individual player with a Port Hopper game account who may consume paid gameplay services.
+
 **Active Play Time**:
 The billable duration of a player's active gameplay, measured in whole seconds. Time spent idle with the game open is excluded.
 _Avoid_: Session duration, voyage duration

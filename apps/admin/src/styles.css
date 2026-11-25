@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@theme {
+  --font-sans: "Inter Variable", Inter, system-ui, sans-serif;
+  --color-background: #fff;
+  --color-foreground: #1d2633;
+  --color-sidebar: #f8f9fc;
+  --color-muted: #f6f8fb;
+  --color-muted-foreground: #526071;
+  --color-border: #e1e6ed;
+  --color-primary: #233e67;
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background font-sans text-foreground antialiased; }
+  a { @apply no-underline; }
+  h1 { @apply mb-6 text-3xl font-semibold tracking-tight; }
+  h2 { @apply text-lg font-semibold tracking-tight; }
+  dt { @apply mb-1 text-sm text-muted-foreground; }
+  a:focus-visible { @apply outline-2 outline-offset-4 outline-primary; }
+}
+
+@layer components {
+  .nav-link:hover { @apply bg-slate-200/60 text-foreground; }
+  .nav-link[aria-current="page"] { @apply bg-[#e8eef8] text-primary; }
+  .table-panel { @apply rounded-lg border bg-background; }
+  .empty-state { @apply px-5 py-14 text-center text-sm text-muted-foreground; }
+  .record-link:hover { @apply text-primary; }
+  .record-id { @apply font-mono text-sm text-muted-foreground; }
+  .admin-action {
+    @apply inline-flex items-center rounded-md border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60;
+  }
+  .admin-action-primary { @apply border-primary bg-primary text-white hover:bg-primary/90; }
+  .resizable-table { table-layout: fixed; }
+  .column-resizer {
+    @apply absolute inset-y-1 right-0 w-3 cursor-col-resize touch-none select-none;
+  }
+  .column-resizer::after {
+    @apply absolute inset-y-2 right-1 w-px bg-border content-[''];
+  }
+  .column-resizer:hover::after,
+  .column-resizer:focus-visible::after { @apply bg-primary; }
+  .row-action {
+    @apply ml-auto flex w-fit rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-primary opacity-0 pointer-events-none;
+  }
+  tr:hover .row-action,
+  tr:focus-within .row-action { @apply opacity-100 pointer-events-auto; }
+  .row-action:hover { @apply bg-muted; }
+  @media (hover: none) {
+    .row-action { @apply opacity-100 pointer-events-auto; }
+  }
+}

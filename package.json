@@ -2,6 +2,11 @@
   "name": "porthopper",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "dev:admin": "npm run dev --workspace @porthopper/admin",
+    "dev:api": "npm run dev --workspace @porthopper/api",
+    "db:init": "npm run db:init --workspace @porthopper/api"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"

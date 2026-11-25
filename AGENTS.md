@@ -17,6 +17,7 @@ Do not begin implementation of the Admin, Game, or API until explicitly instruct
 ## Architecture boundaries
 
 - The Port Hopper backend owns ports, vessels, fictional customer accounts, voyages, and measured gameplay usage.
+- Model customers as individual players with game accounts. Use fictional people and `.example` email domains in fixtures.
 - Instellix owns billing entities, including products and contracts, rating, invoices, and payment records.
 - The game and admin communicate only through the Port Hopper backend; neither may call Instellix directly.
 - Keep customer billing country, performance location, and tax location as separate concepts.
