@@ -1,5 +1,4 @@
 # Port Hopper Repository Instructions
-
 ## Project scope
 
 Port Hopper is a fictional, desktop-first maritime browser game with a separate business backend and admin dashboard. Its primary purpose is to learn and demonstrate usage-based billing integrations with Instellix (formerly Nitrobox).
@@ -122,3 +121,123 @@ Ask: "Would this text appear in a real, production-quality SaaS admin tool?"
 If not, remove it unless explicitly requested.
 
 These rules apply by default to all screens and components unless I explicitly request an exception.
+
+## Agent skills
+
+### Issue tracker
+
+Track issues and specs in GitHub Issues for `speedracr/porthopper`. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Use a single-context layout with a root `GLOSSARY.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+
+## Public Repository and Information Security
+
+This repository is intended to be publicly accessible on GitHub.
+
+**Assume that every committed file, Git commit, issue, pull request, and CI log may be viewed by anyone.**
+
+### Information that must never be committed
+
+- API keys, OAuth client secrets, access tokens, refresh tokens, passwords, or private keys.
+- Real Instellix staging or production credentials.
+- Internal Instellix documentation, source code, configuration exports, or proprietary implementation details.
+- Actual customer information, payment details, invoices, or other personal or confidential data.
+- Raw API responses or logs containing real tenant identifiers, credentials, or sensitive information.
+- Local environment files, database files, backups, or debugging artifacts containing non-public data.
+
+Use synthetic data for fixtures, tests, screenshots, and documentation.
+
+### Environment configuration
+
+- Store secrets exclusively in local environment variables or approved secret-management systems.
+- Never embed credentials in frontend code.
+- Commit an `.env.example` containing placeholder variable names and safe example values.
+- Add `.env`, `.env.*.local`, credential files, local databases, and other sensitive artifacts to `.gitignore`.
+- Ensure the application works in mock mode without any Instellix credentials.
+- Keep production and staging credentials separate.
+- Do not expose secrets in exception messages, HTTP responses, or application logs.
+
+### Instellix integration
+
+- Use only publicly available API documentation that company policy permits for this project.
+- Never copy internal Instellix code or proprietary documentation into this repository.
+- Communicate with Instellix exclusively through authorized public API endpoints.
+- Keep Instellix authentication and API communication server-side.
+- Never expose tenant credentials or privileged integration operations to browser clients.
+- Do not include raw real-world API requests or responses in public tests, fixtures, or documentation.
+- Any example API payloads must use fabricated identities and sanitized identifiers.
+- Never publish actual tenant configuration without explicit authorization.
+
+### Git and GitHub safety
+
+- Before committing changes, review staged files for secrets, confidential information, and accidental artifacts.
+- Never use `git add .` blindly without inspecting what will be staged.
+- Run automated secret scanning where practical, such as Gitleaks.
+- Keep generated build files, dependency folders, local databases, and temporary files out of version control.
+- Treat screenshots, terminal output, comments, and commit messages as potentially sensitive.
+- Do not push, publish, create a public repository, or change repository visibility without my explicit approval.
+- If sensitive information is accidentally committed, stop and report it immediately. Do not assume deleting the file in a later commit makes the secret safe.
+
+### Dependencies and licensing
+
+- Prefer established, actively maintained open-source dependencies.
+- Respect the licenses of external source code, images, fonts, sounds, and other assets.
+- Do not copy proprietary assets from commercial games or other software.
+- Maintain appropriate attribution and license notices where required.
+- Do not assume that publicly accessible documentation or source code is automatically licensed for redistribution.
+
+### Security review
+
+Before the first public push, perform a repository-wide review for:
+1. Secrets and credentials.
+2. Confidential or internal company information.
+3. Sensitive data in Git history.
+4. Unintentionally tracked files.
+5. Dependency and licensing issues.
+
+Report any findings and resolve them before publication.
+
+**When uncertain whether information is safe to publish, exclude it and ask for approval.**
+
+## Implementation workflow
+
+Optimize for fast, incremental delivery and a limited Codex token budget.
+
+- Implement one small, independently testable vertical slice at a time.
+- Never interpret the entire PRD as authorization to implement all features.
+- Prefer the simplest implementation that satisfies the current acceptance criteria.
+- Do not introduce infrastructure, dependencies, abstractions, or features for hypothetical future requirements.
+- Avoid broad refactoring and unrelated improvements.
+- Reuse existing code and established patterns whenever possible.
+- Use reasonable defaults rather than asking about minor implementation decisions.
+- Do not spend significant effort investigating alternative architectures unless the chosen approach is demonstrably blocked.
+- Do not automatically continue to the next feature after completing the current task.
+
+### Task boundaries
+
+Before coding, briefly state:
+1. What will be implemented.
+2. What will explicitly not be implemented.
+3. How completion will be verified.
+
+Then implement the task without further planning unless a material blocker arises.
+
+If a task becomes significantly more complex than expected, stop at the last working state, report the blocker, and recommend the smallest next step.
+
+### Verification
+
+- Run relevant type checks, tests, and linting where available.
+- Prefer a small number of focused tests over broad test suites.
+- Fix issues introduced by the current change.
+- Do not expand scope to unrelated problems.
+- Finish with a concise summary of changes, verification results, and remaining limitations.
+
+### Documentation
+
+- Update documentation only when the implementation changes an important contract, architectural decision, or user-facing behavior.
+- Do not generate lengthy implementation reports or duplicate existing specifications.
+- Never add development notes or acceptance criteria to the application UI.
+
+Apply these rules by default unless I explicitly request otherwise.
