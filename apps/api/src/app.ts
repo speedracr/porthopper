@@ -3,8 +3,9 @@ import type { Customer, CustomerFieldErrors, CustomerSummary } from "../../../pa
 import { validateCustomerInput } from "./customer-input.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { registerCatalogRoutes } from "./catalog.ts";
+import { registerVoyageRoutes } from "./voyages.ts";
 
-export function createApp(db: DatabaseSync) {
+export function createApp(db: DatabaseSync, voyageOptions?: Parameters<typeof registerVoyageRoutes>[2]) {
   db.exec("PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON");
   const listCustomers = db.prepare("SELECT id, name, billingCountry, status FROM customers ORDER BY id");
   const getCustomer = db.prepare(`
@@ -90,5 +91,6 @@ export function createApp(db: DatabaseSync) {
   app.put("/api/customers/:id", (c) => saveCustomer(c, c.req.param("id")));
 
   registerCatalogRoutes(app, db);
+  registerVoyageRoutes(app, db, voyageOptions);
   return app;
 }

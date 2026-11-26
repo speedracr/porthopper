@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { isCountryCode } from "../../../packages/shared/countries.ts";
 import type { DatabaseSync } from "node:sqlite";
 
-const migrations = ["001-customers.sql", "002-customer-country-codes.sql", "003-ports-vessels.sql"];
+const migrations = ["001-customers.sql", "002-customer-country-codes.sql", "003-ports-vessels.sql", "004-voyages.sql"];
 export const schemaVersion = migrations.length;
 
 export function initializeDatabase(db: DatabaseSync) {

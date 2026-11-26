@@ -21,6 +21,10 @@ Finalize the session and create its positive-usage record in one transaction. Pe
 
 Mission outcome has no role in finalization or quantity. Keep duration measurement separate from usage submission so reporting can later submit periodic increments from the measured total. For the MVP, activity signals only meter time and submission happens once per finalized session.
 
+### Step 5: Admin-managed voyages
+
+This increment measures backend elapsed time from Admin start to end, before the activity-signal and billing workflow above is implemented. SQLite stores UTC epoch milliseconds and derives the immutable elapsed duration from the finalized timestamps. The API exposes UTC timestamps, fractional seconds, and measured minutes, not a billable quantity. Each voyage snapshots the player, port, vessel, product key, and both billing and performance countries. Tax location is nullable and is not inferred from either country.
+
 ## API contract boundaries
 
 Validate inputs at the API boundary. The seeded player is resolved by local backend configuration. Requests carry identifiers and activity signals, while the backend determines ownership, customer attribution, timestamps, and quantity.

@@ -7,12 +7,13 @@ import { loadCustomer, loadCustomers, saveCustomer } from "./customer-api";
 import { CustomerForm, EditCustomer } from "./customer-form";
 import { countryName } from "../../../packages/shared/countries";
 import { catalogRoutes, Configuration } from "./catalog";
+import { voyageRoutes } from "./voyages";
 import "./styles.css";
 
 const navigation = [
   { to: "/", title: "Dashboard", icon: LayoutDashboard, empty: "No activity yet" },
   { to: "/customers", title: "Customers", icon: Users },
-  { to: "/voyages", title: "Voyages", icon: Ship, empty: "No voyages to display" },
+  { to: "/voyages", title: "Voyages", icon: Ship },
   { to: "/billing", title: "Billing", icon: ReceiptText, empty: "No billing activity" },
   { to: "/configuration", title: "Configuration", icon: Settings },
 ];
@@ -176,6 +177,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/customers/:customerId/edit" loader={loadCustomer} action={saveCustomer} element={<EditCustomer />} errorElement={<CustomerLoadError detail />} hydrateFallbackElement={<p role="status">Loading customer…</p>} />
           <Route path="/configuration" element={<Configuration />} />
           {catalogRoutes()}
+          {voyageRoutes}
           {navigation.map(({ to, title, empty }) => empty && (
             <Route key={to} path={to} element={<><h1>{title}</h1><p className="table-panel empty-state">{empty}</p></>} />
           ))}

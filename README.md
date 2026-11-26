@@ -33,3 +33,9 @@ npm run dev:admin
 Open the local URL printed by Vite. Admin proxies `/api` to the loopback-only API on port 3001. Customer, port, and vessel data comes from SQLite.
 
 Open **Configuration → Ports** or **Configuration → Vessels** to create and edit records. Set availability using **Assigned ports** on the vessel form. Inactive records remain linked until you remove their assignments.
+
+### Voyages
+
+Open **Voyages → Start voyage** and select an active player, port, and available vessel. Use **End voyage** on the detail page to record elapsed time. Times are UTC; elapsed duration is stored at millisecond precision and converted to measured minutes without billing rounding.
+
+To enable **Create test voyage**, start the local API with `PORT_HOPPER_TEST_VOYAGES=1 npm run dev:api`. The administrative test endpoint is disabled by default. This flag is not authentication: keep the API and Admin proxy local.

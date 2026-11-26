@@ -14,7 +14,7 @@ function openInitializedDatabase() {
   throw new Error("Port Hopper database unavailable. Run npm run db:init first.");
 }
 
-const app = createApp(openInitializedDatabase());
+const app = createApp(openInitializedDatabase(), { allowTestVoyages: process.env.PORT_HOPPER_TEST_VOYAGES === "1" });
 serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 3001 }, ({ port }) => {
   console.log(`Port Hopper API listening on http://127.0.0.1:${port}`);
 });
