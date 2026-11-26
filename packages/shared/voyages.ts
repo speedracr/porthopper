@@ -1,4 +1,8 @@
+import type { UsageSubmission } from "./billing.ts";
+
 export type Voyage = {
+  portTimeZone: string;
+  usageSubmission: UsageSubmission | null;
   id: string;
   playerId: string;
   playerName: string;

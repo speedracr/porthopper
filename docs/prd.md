@@ -12,6 +12,14 @@ A voyage is a gameplay session. The player can end it at any time and the measur
 
 The selected vessel or vessel category determines the Instellix product used for rating. The harbor determines the service performance location. Customer billing country, service performance location, and tax location are separate concepts.
 
+## Current increment: Step 6
+
+The workflow below describes the eventual activity-signal model. Steps 5–6 currently use Admin-managed start/end and simulated completed voyages. Step 6 submits precise measured seconds explicitly from Admin, without billing-unit conversion or rounding. One persisted submission snapshot and external usage identifier are retained per voyage. Confirmed failures can be retried unchanged; accepted and uncertain outcomes cannot be resubmitted.
+
+Administrators can create historical sessions using port-local date/time and duration in minutes, and edit completed sessions before submission. End time is derived in UTC; DST gaps and ambiguous local times are rejected. Submission freezes measured usage and its geographic context. Mock scenarios include acceptance, rejection, temporary failure, and ambiguous outcome; no real billing operations occur.
+
+A future optional game **Time Machine** will select a fictional start time before gameplay while the backend measures actual elapsed duration independently. This is documentation only, not part of Step 6 implementation.
+
 ## Workflow
 
 1. A synthetic client starts a Play Session through the backend API and sends activity signals every 10 seconds while the player is active.

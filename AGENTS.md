@@ -242,3 +242,39 @@ If a task becomes significantly more complex than expected, stop at the last wor
 - Never add development notes or acceptance criteria to the application UI.
 
 Apply these rules by default unless I explicitly request otherwise.
+
+## Project continuity and session handoff
+
+This project is developed across multiple AI coding sessions and editors, including Zed and Codex. Optimize for quick context recovery and minimal token usage.
+
+### At the beginning of each task
+
+1. Read `AGENTS.md` and `docs/STATUS.md` first.
+2. Read only the relevant sections of `docs/prd.md` and `docs/architecture.md`.
+3. Inspect the code relevant to the requested task. Do not scan the entire repository unless necessary.
+4. Use `docs/STATUS.md` to understand completed work, current limitations, and the next planned increment.
+5. Treat the actual code and tests as authoritative for implementation details. Do not assume the status file is perfectly current.
+
+### At the end of each completed task
+
+Update `docs/STATUS.md` with:
+
+- The latest completed increment.
+- What is now functional.
+- Important implementation decisions or changes.
+- Known limitations or unresolved issues.
+- The next recommended increment.
+
+Keep the entire file under approximately 300 words.
+
+Replace outdated information instead of appending a chronological development diary.
+
+Do not duplicate the PRD, architecture document, or implementation details already obvious from the code.
+
+Only update other documentation when requirements or architectural decisions materially change.
+
+### Session handoff
+
+A new coding session should be able to understand the project's current state by reading `AGENTS.md` and `docs/STATUS.md`, then inspecting only the files relevant to its task.
+
+When finishing a task, provide a concise summary of changes and verification results. Do not automatically start the next increment.

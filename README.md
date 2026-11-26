@@ -38,4 +38,10 @@ Open **Configuration → Ports** or **Configuration → Vessels** to create and 
 
 Open **Voyages → Start voyage** and select an active player, port, and available vessel. Use **End voyage** on the detail page to record elapsed time. Times are UTC; elapsed duration is stored at millisecond precision and converted to measured minutes without billing rounding.
 
-To enable **Create test voyage**, start the local API with `PORT_HOPPER_TEST_VOYAGES=1 npm run dev:api`. The administrative test endpoint is disabled by default. This flag is not authentication: keep the API and Admin proxy local.
+To enable **Create test voyage**, start the local API with `PORT_HOPPER_TEST_VOYAGES=1 npm run dev:api`. The administrative test endpoint is disabled by default. This flag is not authentication: keep the API and Admin proxy local. Choose a start date/time in the selected port's time zone and a duration in minutes; the form calculates the end time. Historical dates and periods spanning months or years are supported. Nonexistent or ambiguous daylight-saving times are rejected. Completed voyages can be edited until usage submission begins.
+
+### Mock usage submission
+
+On a completed voyage with positive duration, choose **Submit usage**. The backend persists an immutable snapshot and stable external usage identifier before contacting the server-side mock adapter. The detail page shows the result and attempt history. Accepted usage cannot be submitted again; **Retry** is available only after confirmed failure and reuses the original snapshot. Unknown outcomes require reconciliation and cannot be retried through Admin.
+
+The mock accepts usage by default and returns a synthetic receipt reference. To exercise failures locally, start the API with `PORT_HOPPER_MOCK_USAGE_SCENARIO=reject`, `temporary`, or `ambiguous` (for example, `PORT_HOPPER_MOCK_USAGE_SCENARIO=temporary npm run dev:api`). Restart without that variable to retry a confirmed failure successfully. These controls are server-side only and are prohibited under `NODE_ENV=production`. No rating, invoicing, payments, or external requests occur. All Admin operations remain local and unauthenticated in this increment.

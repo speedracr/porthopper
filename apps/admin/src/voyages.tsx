@@ -2,6 +2,8 @@ import {
   Form, Link, Route, isRouteErrorResponse, redirect, useActionData, useLoaderData, useNavigation,
   useRouteError, useSearchParams, type ActionFunctionArgs, type LoaderFunctionArgs,
 } from "react-router";
+import { useState } from "react";
+import { formatPortLocal, portLocalToEpoch, portTimeZones } from "../../../packages/shared/port-time";
 import { countryName } from "../../../packages/shared/countries";
 import type { CatalogDetail, Port } from "../../../packages/shared/catalog";
 import type { CustomerSummary } from "../../../packages/shared/customers";
@@ -69,15 +71,42 @@ async function post(request: Request, path: string, body?: object) {
 async function start({ request }: ActionFunctionArgs) {
   const data = await request.formData();
   const isTest = new URL(request.url).searchParams.get("test") === "1";
-  const duration = data.get("durationSeconds");
+  const duration = data.get("durationMinutes");
   return post(request, isTest ? "/api/admin/voyages/test" : api, {
     playerId: data.get("playerId"), portId: data.get("portId"), vesselId: data.get("vesselId"),
-    ...(isTest && { durationSeconds: typeof duration === "string" && duration.trim() ? Number(duration) : null }),
+    ...(isTest && { startedAtLocal: data.get("startedAtLocal"), durationMinutes: typeof duration === "string" && duration.trim() ? Number(duration) : null }),
   });
 }
 
-function end({ request, params }: ActionFunctionArgs) {
-  return post(request, `${api}/${encodeURIComponent(params.id!)}/end`);
+async function end({ request, params }: ActionFunctionArgs) {
+  const data = await request.formData();
+  const intent = data.get("intent");
+  const id = encodeURIComponent(params.id!);
+  if (intent === "usage") return post(request, `/api/admin/voyages/${id}/usage`);
+  if (intent === "timing") return post(request, `/api/admin/voyages/${id}/timing`, {
+    startedAtLocal: data.get("startedAtLocal"), durationMinutes: Number(data.get("durationMinutes")),
+  });
+  return post(request, `${api}/${id}/end`);
+}
+
+function TimingFields({ timeZone, startedAt, duration = 0 }: { timeZone: string; startedAt?: string; duration?: number }) {
+  const [local, setLocal] = useState(() => formatPortLocal(startedAt ?? Date.now(), timeZone));
+  const [value, setValue] = useState(String(duration));
+  let endTime = "—";
+  let error = "";
+  try {
+    const start = portLocalToEpoch(local, timeZone);
+    if (value.trim() && Number.isFinite(Number(value)) && Number(value) >= 0) {
+      endTime = `${formatPortLocal(start + Math.round(Number(value) * 60_000), timeZone).replace("T", " ")} (${timeZone})`;
+    }
+  } catch { error = "Choose a valid, unambiguous local time."; }
+  return <>
+    <label><span>Start date and time ({timeZone})</span><input className={control} name="startedAtLocal" type="datetime-local" step="0.001" value={local} onChange={(e) => setLocal(e.target.value)} required aria-invalid={!!error} />
+      {error && <span className="block text-sm text-red-700" role="alert">{error}</span>}
+    </label>
+    <label><span>Duration (minutes)</span><input className={control} name="durationMinutes" type="number" min="0" step="any" value={value} onChange={(e) => setValue(e.target.value)} required /></label>
+    <p className="text-sm sm:col-span-2">End time: {endTime}</p>
+  </>;
 }
 
 function Breadcrumb() {
@@ -108,7 +137,7 @@ function VoyageList() {
     {voyages.length === 0 ? <p className="table-panel empty-state">No voyages found</p> :
       <div className="table-panel"><Table aria-label="Voyages">
         <TableHeader><TableRow>
-          {['Player', 'Port', 'Vessel', 'Started at', 'Duration', 'Status'].map((label) => <TableHead key={label}>{label}</TableHead>)}
+          {['Player', 'Port', 'Vessel', 'Started at', 'Duration', 'Status', 'Usage'].map((label) => <TableHead key={label}>{label}</TableHead>)}
         </TableRow></TableHeader>
         <TableBody>{voyages.map((voyage) => <TableRow key={voyage.id}>
           <TableCell><Link className="record-link font-medium" to={voyage.id}>{voyage.playerName}<span className="sr-only"> — {time(voyage.startedAt)}</span></Link></TableCell>
@@ -116,6 +145,7 @@ function VoyageList() {
           <TableCell>{time(voyage.startedAt)}</TableCell>
           <TableCell>{voyage.durationSeconds === null ? "—" : `${voyage.durationSeconds} s`}</TableCell>
           <TableCell>{voyage.status}{voyage.isTest ? " (test)" : ""}</TableCell>
+                    <TableCell>{voyage.usageSubmission?.status ?? "—"}</TableCell>
         </TableRow>)}</TableBody>
       </Table></div>}
   </>;
@@ -125,11 +155,15 @@ function VoyageDetail() {
   const voyage = useLoaderData<typeof detail>();
   const result = useActionData<typeof end>();
   const saving = useNavigation().state !== "idle";
+  const [editing, setEditing] = useState(false);
+  const usage = voyage.usageSubmission;
+  const canEdit = voyage.status === "Completed" && !usage;
+  const canSubmit = voyage.status === "Completed" && (voyage.durationSeconds ?? 0) > 0 && (!usage || usage.status === "pending" || usage.status === "failed");
   const fields = [
     ["Voyage ID", voyage.id], ["Status", voyage.status], ["Player", voyage.playerName],
     ["Billing country", countryName(voyage.billingCountry)], ["Port", voyage.portName],
     ["Performance country", countryName(voyage.performanceCountry)], ["Vessel", voyage.vesselName],
-    ["Product key", voyage.productKey], ["Started at", time(voyage.startedAt)],
+    ["Product key", voyage.productKey], ["Tax location", voyage.taxLocation ?? "—"], ["Started at", time(voyage.startedAt)],
     ["Ended at", voyage.endedAt ? time(voyage.endedAt) : "—"],
     ["Duration (seconds)", voyage.durationSeconds ?? "—"],
     ["Measured gameplay minutes", voyage.measuredMinutes === null ? "—" : minutes.format(voyage.measuredMinutes)],
@@ -138,14 +172,42 @@ function VoyageDetail() {
     <Breadcrumb />
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
       <h1 className="mb-0">{voyage.isTest ? "Test voyage" : "Voyage"}</h1>
-      {voyage.status === "Active" && <Form method="post">
+      <div className="flex gap-2">
+            {canEdit && <button type="button" className="admin-action" onClick={() => setEditing(!editing)} disabled={saving}>Edit</button>}
+            {canSubmit && <Form method="post"><button name="intent" value="usage" className="admin-action admin-action-primary" disabled={saving}>{usage?.status === "failed" ? "Retry" : "Submit usage"}</button></Form>}
+            {voyage.status === "Active" && <Form method="post">
         <button className="admin-action admin-action-primary" disabled={saving}>{saving ? "Ending…" : "End voyage"}</button>
       </Form>}
+      </div>
     </div>
+    {editing && canEdit && <Form method="post" className="table-panel mb-5 p-5">
+      <fieldset disabled={saving} className="grid gap-4 sm:grid-cols-2 [&_label]:space-y-1.5 [&_label]:text-sm [&_label]:font-medium">
+        <TimingFields key={voyage.startedAt + voyage.endedAt} timeZone={voyage.portTimeZone} startedAt={voyage.startedAt} duration={voyage.measuredMinutes ?? 0} />
+      </fieldset>
+      <div className="mt-4 flex justify-end gap-2"><button type="button" className="admin-action" onClick={() => setEditing(false)}>Cancel</button><button className="admin-action admin-action-primary" name="intent" value="timing" disabled={saving}>Save</button></div>
+    </Form>}
     {result?.error && <p className="mb-4 text-sm text-red-700" role="alert">{result.error}</p>}
     <dl className="table-panel grid gap-5 p-5 sm:grid-cols-2">
       {fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd className="break-words">{value}</dd></div>)}
     </dl>
+    {voyage.status === "Completed" && <section className="mt-6">
+      <h2 className="mb-3">Usage submission</h2>
+      <dl className="table-panel grid gap-5 p-5 sm:grid-cols-2">
+        {[
+          ["Status", usage?.status === "unknown" ? "Outcome unknown" : usage?.status ?? "Not submitted"],
+          ["External usage identifier", usage?.request.id ?? "—"],
+          ["Created at", usage ? time(usage.createdAt) : "—"],
+          ["Last attempt", usage?.attemptedAt ? time(usage.attemptedAt) : "—"],
+          ["Attempts", usage?.attempts.length ?? 0],
+          ["Response reference", usage?.externalId ?? "—"],
+        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd className="break-all">{value}</dd></div>)}
+      </dl>
+      {!!usage?.attempts.length && <div className="table-panel mt-3"><Table aria-label="Submission attempts"><TableHeader><TableRow>
+        {['Attempt', 'Started at', 'Outcome', 'Error'].map((label) => <TableHead key={label}>{label}</TableHead>)}
+      </TableRow></TableHeader><TableBody>{usage.attempts.map((attempt, index) => <TableRow key={attempt.id}>
+        <TableCell>{index + 1}</TableCell><TableCell>{time(attempt.startedAt)}</TableCell><TableCell>{attempt.outcome ?? "In progress"}</TableCell><TableCell className="whitespace-normal">{attempt.error ?? "—"}</TableCell>
+      </TableRow>)}</TableBody></Table></div>}
+    </section>}
   </>;
 }
 
@@ -176,7 +238,7 @@ function StartVoyage() {
           <option value="" disabled>{portId && !vessels.length ? "No available vessels" : "Select a vessel"}</option>
           {vessels.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
         </select></label>
-        {isTest && <label><span>Duration (seconds)</span><input className={control} name="durationSeconds" type="number" min="0" step="0.001" required /></label>}
+        {isTest && portId && <TimingFields key={portId} timeZone={portTimeZones[portId] ?? "UTC"} />}
       </fieldset>
       {result?.error && <p className="mt-4 text-sm text-red-700" role="alert">{result.error}</p>}
       <div className="mt-5 flex justify-end gap-2">

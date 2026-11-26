@@ -25,6 +25,16 @@ Mission outcome has no role in finalization or quantity. Keep duration measureme
 
 This increment measures backend elapsed time from Admin start to end, before the activity-signal and billing workflow above is implemented. SQLite stores UTC epoch milliseconds and derives the immutable elapsed duration from the finalized timestamps. The API exposes UTC timestamps, fractional seconds, and measured minutes, not a billable quantity. Each voyage snapshots the player, port, vessel, product key, and both billing and performance countries. Tax location is nullable and is not inferred from either country.
 
+### Step 6: Mock usage handoff and historical sessions
+
+Admin explicitly submits completed positive-duration voyages. The server-side `BillingAdapter` has only `submitUsage`. Its request carries precise measured seconds (no billing conversion or rounding), UTC start/end, player reference, local vessel product key, billing and performance countries, and nullable explicit tax location. The local product key is not an Instellix product ID.
+
+SQLite enforces one submission per voyage. Before calling the adapter, a transaction persists the stable usage identifier, immutable context snapshot, creation time, and attempt, and claims the submission. Transitions are `pending → submitting → accepted | failed | unknown`; only `failed → submitting` is retryable. Concurrent submissions cannot claim the same record. Replays of accepted, submitting, or unknown records do not call the adapter. Explicit rejection and temporary failure are confirmed failures; exceptions, timeouts, and interrupted attempts become `unknown` and require reconciliation outside this increment. No automatic recovery submission occurs. Attempts retain timestamps and fixed, sanitized errors, never raw adapter exceptions.
+
+Historical Admin creation accepts port-local start time and minutes, computes the UTC end instant, and retains millisecond duration precision. The initial ports map to Europe/Berlin, Europe/Amsterdam, Europe/Stockholm, and Europe/London by stable port ID. Invalid dates, DST gaps, and repeated local times are rejected rather than guessed. Completed sessions can be edited only before a submission record exists; the session ID is preserved. After submission begins, quantities and geographic context remain frozen, and retries use the original snapshot independently of later catalog or customer edits.
+
+Future game Time Machine (not implemented): players may optionally choose a historical voyage start before gameplay. That selected time defines the fictional usage period; actual elapsed gameplay measurement remains independent.
+
 ## API contract boundaries
 
 Validate inputs at the API boundary. The seeded player is resolved by local backend configuration. Requests carry identifiers and activity signals, while the backend determines ownership, customer attribution, timestamps, and quantity.
