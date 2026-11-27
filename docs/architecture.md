@@ -35,6 +35,14 @@ Historical Admin creation accepts port-local start time and minutes, computes th
 
 Future game Time Machine (not implemented): players may optionally choose a historical voyage start before gameplay. That selected time defines the fictional usage period; actual elapsed gameplay measurement remains independent.
 
+### Step 7A: Read-only Instellix connectivity
+
+Connectivity is a separate server-only service, not a live usage adapter. `INSTELLIX_MODE` defaults to `mock`; live checks require explicit tenant configuration and `INSTELLIX_CONNECTIVITY_APPROVED=true`. Company approval and tenant version/scope verification remain prerequisites. No settings are inferred from a production URL. Existing usage submission stays mock regardless of connectivity mode.
+
+`GET /api/admin/integration` returns sanitized in-memory status without network traffic. An explicit `POST /api/admin/integration/check` obtains a client-credentials token via HTTP Basic and multipart form at `/{realm}/oauth2/token`, then validates the documented `GET /v2/translation-locales` response (`tenant-management-read`). It discards returned configuration and exposes no tenant data or tokens. No arbitrary URL or HTTP method is accepted from browsers.
+
+Tokens are cached in memory with expiry skew; concurrent checks share one operation. Each request has a timeout and rejects redirects. A read-check 401 clears the cache but is not automatically retried. Only fixed locally generated error messages reach Admin. Status and last-success time reset on restart; there is no persistence migration. Local HTTP simulations verify the protocol without contacting a tenant. Public sources and required environment variables are listed in README.
+
 ## API contract boundaries
 
 Validate inputs at the API boundary. The seeded player is resolved by local backend configuration. Requests carry identifiers and activity signals, while the backend determines ownership, customer attribution, timestamps, and quantity.

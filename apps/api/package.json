@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --import tsx src/server.ts",
     "db:init": "node --import tsx src/init-db.ts",
-    "test": "node --import tsx --test src/catalog.test.ts src/voyages.test.ts",
+    "test": "node --import tsx --test src/catalog.test.ts src/voyages.test.ts src/integration.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

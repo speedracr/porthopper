@@ -2,6 +2,7 @@ import {
   Form, Link, Route, isRouteErrorResponse, redirect, useActionData, useLoaderData, useNavigation, useRouteError,
   type ActionFunctionArgs, type LoaderFunctionArgs,
 } from "react-router";
+import { IntegrationConnection, loadIntegration } from "./integration";
 import type { CatalogDetail, CatalogFieldErrors, CatalogKind, CatalogRecord, Port } from "../../../packages/shared/catalog";
 import { countryCodes, countryName } from "../../../packages/shared/countries";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./components/ui/table";
@@ -22,9 +23,10 @@ const sections = [
 ] as const;
 
 export function Configuration() {
+  const integration = useLoaderData<typeof loadIntegration>();
   return <><h1>Configuration</h1><ul className="table-panel divide-y">
     {sections.map(({ kind, title }) => <li key={kind}><Link className="record-link block px-5 py-3 text-sm font-medium" to={kind}>{title}</Link></li>)}
-  </ul></>;
+  </ul><IntegrationConnection initial={integration} /></>;
 }
 
 export function catalogRoutes() {

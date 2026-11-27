@@ -5,7 +5,9 @@ import type { DatabaseSync } from "node:sqlite";
 import { registerCatalogRoutes } from "./catalog.ts";
 import { registerVoyageRoutes } from "./voyages.ts";
 
-export function createApp(db: DatabaseSync, voyageOptions?: Parameters<typeof registerVoyageRoutes>[2]) {
+import { createIntegration, type IntegrationOptions } from "./integration.ts";
+
+export function createApp(db: DatabaseSync, voyageOptions?: Parameters<typeof registerVoyageRoutes>[2], integrationOptions?: IntegrationOptions) {
   db.exec("PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON");
   const listCustomers = db.prepare("SELECT id, name, billingCountry, status FROM customers ORDER BY id");
   const getCustomer = db.prepare(`
@@ -89,6 +91,10 @@ export function createApp(db: DatabaseSync, voyageOptions?: Parameters<typeof re
 
   app.post("/api/customers", (c) => saveCustomer(c));
   app.put("/api/customers/:id", (c) => saveCustomer(c, c.req.param("id")));
+
+  const integration = createIntegration(integrationOptions);
+  app.get("/api/admin/integration", (c) => c.json(integration.status()));
+  app.post("/api/admin/integration/check", async (c) => c.json(await integration.check()));
 
   registerCatalogRoutes(app, db);
   registerVoyageRoutes(app, db, voyageOptions);

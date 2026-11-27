@@ -8,6 +8,7 @@ import { CustomerForm, EditCustomer } from "./customer-form";
 import { countryName } from "../../../packages/shared/countries";
 import { catalogRoutes, Configuration } from "./catalog";
 import { voyageRoutes } from "./voyages";
+import { loadIntegration, testIntegration } from "./integration";
 import "./styles.css";
 
 const navigation = [
@@ -175,7 +176,7 @@ const router = createBrowserRouter(createRoutesFromElements(
           <Route path="/customers/new" action={saveCustomer} element={<CustomerForm />} />
           <Route path="/customers/:customerId" loader={loadCustomer} element={<CustomerDetail />} errorElement={<CustomerLoadError detail />} hydrateFallbackElement={<p role="status">Loading customer…</p>} />
           <Route path="/customers/:customerId/edit" loader={loadCustomer} action={saveCustomer} element={<EditCustomer />} errorElement={<CustomerLoadError detail />} hydrateFallbackElement={<p role="status">Loading customer…</p>} />
-          <Route path="/configuration" element={<Configuration />} />
+          <Route path="/configuration" loader={loadIntegration} action={testIntegration} element={<Configuration />} errorElement={<><h1>Configuration</h1><p role="alert">Unable to load configuration.</p><Link className="admin-action mt-3" to="/configuration">Retry</Link></>} hydrateFallbackElement={<p role="status">Loading configuration…</p>} />
           {catalogRoutes()}
           {voyageRoutes}
           {navigation.map(({ to, title, empty }) => empty && (

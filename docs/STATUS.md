@@ -2,27 +2,26 @@
 
 ## Current state
 
-Steps 1–6 implemented. Persistent player, port, vessel, and voyage management remains functional.
+Steps 1–6 remain functional: persistent player/catalog/voyage management, historical sessions, precise usage snapshots, mock submission, safe retries, and conservative unknown-outcome handling.
 
-Latest increment: mock billing integration and retroactive usage management.
+Latest increment: **Step 7A — read-only Instellix connectivity**.
 
-- Admin creates historical completed voyages using port-local start time and minutes, with a calculated end time; completed voyages can be edited before submission.
-- Initial four ports have stable IANA time zones. Invalid dates, DST gaps, and ambiguous times are rejected. UTC persistence and millisecond precision are retained.
-- Admin submits positive measured usage and inspects identifiers, timestamps, status, and sanitized attempt history.
-- SQLite enforces one submission per voyage; stable identifiers and immutable snapshots survive restarts. Confirmed failures retry the original snapshot. Accepted usage is not resubmitted.
-- Ambiguous/interrupted attempts become `unknown`, with no retry action or automatic resubmission.
-- Mock scenarios are configured server-side for acceptance, rejection, temporary failure, and ambiguity; no live requests occur.
+- Server-only environment configuration defaults to mock. Live checks require complete tenant settings and explicit connectivity approval.
+- OAuth client credentials use documented HTTP Basic authentication and multipart form data. Tokens are cached in memory with expiry skew; concurrent checks share one operation.
+- An explicit Admin check calls only `GET /v2/translation-locales` with `tenant-management-read`. Redirects are rejected; requests have timeouts and no automatic retries.
+- Configuration shows mode, connection status, last success, and actionable sanitized errors. Credentials, tokens, and upstream response bodies are never returned.
+- Usage submission remains mock even when connectivity mode is live.
 
 ## Verification
 
-API and Admin TypeScript checks, 12 API tests, Admin production build, and diff whitespace checks passed. UI reviewed in code; no browser-based visual verification performed.
+18 API tests passed, including real loopback HTTP simulations of OAuth, caching/renewal, concurrency, failure classification, redirects, timeouts, and sanitization. API/Admin TypeScript checks, Admin production build, and whitespace checks passed. Security/UI source review found no concrete issues; no browser visual verification performed.
 
 ## Limitations and decisions
 
-Local unauthenticated operation only. Keep API/proxy local. No billing rounding, pricing, tax determination, real Instellix integration, or background retries. Unknown outcomes need future reconciliation. Game activity-signal metering and Time Machine remain unimplemented; the latter is documented in PRD/architecture.
+No live tenant requests performed. Company approval and actual staging URL/realm/version/permission verification remain pending. Live connectivity remains disabled by default. Configure secrets outside Git using the README variable list; `.env` files are not automatically loaded. Status and tokens reset on restart.
 
-Run `npm run db:init` with the API stopped to migrate an existing database. See README for mock scenario controls.
+The application remains local and unauthenticated. No live usage, synchronization, invoices, payments, background jobs, or gameplay changes were added. Existing unknown usage outcomes still require future reconciliation.
 
-## Next recommended increment
+## Next increment
 
-Confirm the Step 7 scope before implementation. Resolve authorized public Instellix API mapping and company-policy approval before any live integration.
+**Step 7B:** agree its scope and required tenant mappings/permissions before implementation. Do not enable live operations until approval and tenant compatibility are confirmed.
