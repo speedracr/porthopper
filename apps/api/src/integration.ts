@@ -151,8 +151,7 @@ export function createIntegration(options: IntegrationOptions = {}) {
 
   async function getToken(trace: IntegrationTraceEntry[]): Promise<string> {
     if (token && token.expiresAt > now()) return token.value;
-    const form = new FormData();
-    form.set("grant_type", "client_credentials");
+    const form = new URLSearchParams({ grant_type: "client_credentials" });
     const startedAt = now();
     token = await jsonRequest(trace, "auth", `${origin}/${realm}/oauth2/token`, {
       headers: { Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}` }, body: form,

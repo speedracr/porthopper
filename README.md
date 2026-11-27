@@ -66,7 +66,7 @@ Configure these **server process environment variables**, using `.env.example` o
 The API reads its process environment; it does not automatically load `.env` files. Supply values via your shell or approved secret tooling. Keep secrets out of frontend variables and Git. Incomplete or unapproved live configuration is disabled without network traffic. HTTP is permitted only through a code-injected loopback transport in automated tests, never by runtime environment configuration.
 
 Public contracts verified for this increment:
-- [Authentication](https://docs.instellix.io/reference/authentication): `POST /{realm}/oauth2/token`, HTTP Basic credentials and multipart `grant_type=client_credentials`; cache `access_token` using `expires_in`.
+- [Authentication](https://docs.instellix.io/reference/authentication): `POST /{realm}/oauth2/token`, HTTP Basic credentials and `application/x-www-form-urlencoded` with `grant_type=client_credentials`; cache `access_token` using `expires_in`.
 - [Get Configured Locales](https://docs.instellix.io/reference/getlocales): `GET /v2/translation-locales`, `tenant-management-read`, response `{ locales: string[] }`. No customer, usage, billing, invoice, or payment records are requested. The response is validated and discarded.
 
 Requests are bounded by timeouts and do not follow redirects. Concurrent checks share one operation. Authentication failures, denied scope, throttling, incompatible responses, and network errors have fixed sanitized messages. A read-check 401 invalidates the cached token; a subsequent manual check renews it. There are no automatic retries or startup connectivity checks. A successful check confirms only this endpoint's accessibility, not write permissions or broader integration readiness.

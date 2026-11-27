@@ -40,7 +40,7 @@ test("configuration fails closed and mock checks remain disabled without outboun
   } finally { await http.close(); }
 });
 
-test("real HTTP Basic multipart OAuth, fixed read, cache skew expiry and concurrent check singleflight", async () => {
+test("real HTTP Basic URL-encoded OAuth, fixed read, cache skew expiry and concurrent check singleflight", async () => {
   let auth = 0; let reads = 0; let clock = 1_000_000;
   const http = await server(async (req, res) => {
     res.setHeader("Content-Type", "application/json");
@@ -48,11 +48,14 @@ test("real HTTP Basic multipart OAuth, fixed read, cache skew expiry and concurr
       auth++;
       assert.equal(req.method, "POST");
       assert.equal(req.headers.authorization, `Basic ${Buffer.from("synthetic-client:synthetic-secret").toString("base64")}`);
+      if (!/^application\/x-www-form-urlencoded(?:;|$)/i.test(req.headers["content-type"] ?? "")) {
+        res.writeHead(415).end();
+        return;
+      }
       const chunks: Buffer[] = [];
       for await (const chunk of req) chunks.push(Buffer.from(chunk));
-      const body = new Response(Buffer.concat(chunks), { headers: { "content-type": req.headers["content-type"]! } });
-      assert.match(req.headers["content-type"]!, /^multipart\/form-data;/);
-      assert.equal((await body.formData()).get("grant_type"), "client_credentials");
+      const body = new URLSearchParams(Buffer.concat(chunks).toString("utf8"));
+      assert.deepEqual([...body], [["grant_type", "client_credentials"]]);
       res.end(JSON.stringify(token));
     } else {
       reads++; assert.equal(req.url, "/v2/translation-locales"); assert.equal(req.method, "GET");
@@ -66,7 +69,7 @@ test("real HTTP Basic multipart OAuth, fixed read, cache skew expiry and concurr
     const checks = Array.from({ length: 10 }, () => integration.check());
     assert.deepEqual(integration.status().trace, []);
     const results = await Promise.all(checks);
-    assert.ok(results.every((result) => result.status === "connected"));
+    assert.ok(results.every((result) => result.status === "connected"), JSON.stringify(results[0]?.trace));
     assert.equal(auth, 1); assert.equal(reads, 1);
     const initial = results[0]!;
     assert.deepEqual(initial.trace.map(({ durationMs, ...entry }) => {
