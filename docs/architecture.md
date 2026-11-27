@@ -41,7 +41,11 @@ Connectivity is a separate server-only service, not a live usage adapter. `INSTE
 
 `GET /api/admin/integration` returns sanitized in-memory status without network traffic. An explicit `POST /api/admin/integration/check` obtains a client-credentials token via HTTP Basic and multipart form at `/{realm}/oauth2/token`, then validates the documented `GET /v2/translation-locales` response (`tenant-management-read`). It discards returned configuration and exposes no tenant data or tokens. No arbitrary URL or HTTP method is accepted from browsers.
 
-Tokens are cached in memory with expiry skew; concurrent checks share one operation. Each request has a timeout and rejects redirects. A read-check 401 clears the cache but is not automatically retried. Only fixed locally generated error messages reach Admin. Status and last-success time reset on restart; there is no persistence migration. Local HTTP simulations verify the protocol without contacting a tenant. Public sources and required environment variables are listed in README.
+Tokens are cached in memory with expiry skew; concurrent checks share one operation. Each request has a timeout and rejects redirects. A read-check 401 clears the cache but is not automatically retried. Admin shows fixed error messages and the latest check's trace: method, path template, status, elapsed time, outcome, and a validated Instellix error UUID when available for support. Raw response text, headers, and tenant-specific URLs are not exposed. Status, trace, and last-success time reset on restart; there is no persistence migration. Local HTTP simulations verify the protocol without contacting a tenant. Public sources and required environment variables are listed in README.
+
+### Port and operating-site mapping
+
+A Port Hopper port identifies where gameplay is performed. An [Instellix operating site](https://docs.instellix.io/docs/operating-sites-1) identifies the seller establishment that issues billing documents and carries its legal and tax-registration details. Keep the two separate; only map a port to an operating site explicitly when the billing setup calls for that issuer. Do not infer the issuer or tax location from the port country.
 
 ## API contract boundaries
 

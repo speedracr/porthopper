@@ -38,5 +38,9 @@ export function IntegrationConnection({ initial }: { initial: IntegrationStatus 
         : "—"}</dd></div>
     </dl>
     {(fetcher.data?.error || result.error) && <p className="mt-3 text-sm text-red-700" role="alert">{fetcher.data?.error ?? result.error}</p>}
+    {!fetcher.data?.error && result.trace?.length > 0 && <details className="table-panel mt-3">
+      <summary className="cursor-pointer rounded-lg px-4 py-3 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary">Last connection trace</summary>
+      <pre className="overflow-x-auto border-t bg-muted p-4 text-xs leading-relaxed" tabIndex={0} aria-label="Last connection trace"><code>{JSON.stringify(result.trace, null, 2)}</code></pre>
+    </details>}
   </section>;
 }
